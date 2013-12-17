@@ -160,6 +160,7 @@
 #       ose_repo_base / CONF_OSE_REPO_BASE -- see below
 #       rhel_repo / CONF_RHEL_REPO -- see below
 #       jboss_repo_base / CONF_JBOSS_REPO_BASE -- see below
+#       rhscl_repo_base / CONF_RHSCL_REPO_BASE -- see below
 #       rhel_optional_repo / CONF_RHEL_OPTIONAL_REPO -- see below
 #     rhsm - use subscription-manager
 #       rhn_user / CONF_RHN_USER
@@ -215,6 +216,7 @@
 # <base>/ose-jbosseap/1.2/os
 # <base>/ose-node/1.2/os
 # <base>/ose-rhc/1.2/os
+# <base>/rhscl/1/os/        - RH software collections
 #
 # To use this layout, simply set the CDN base URL below. Alternatively,
 # set repository URLs individually if they are in different locations.
@@ -252,6 +254,10 @@
 # jboss_repo_base / CONF_JBOSS_REPO_BASE
 #   The base URL for the JBoss repositories used with the "yum"
 #   install method - the part before jbeap/jbews - ends in /6Server/x86_64
+
+# rhscl_repo_base / CONF_RHSCL_REPO_BASE
+#   The base URL for the SCL repositories used with the "yum"
+#   install method - the part before rhscl - ends in /6Server/x86_64
 
 
 # # # # # # # # # # # domains, DNS, hostnames, and IPs # # # # # # # # # # # # # # # # #
@@ -539,6 +545,9 @@ configure_repos()
     # script itself, so we also enable ose-infrastructure here if we are
     # installing named.
     need_infra_repo() { :; }
+
+    # The rhscl channel is needed for the ruby193 software collection.
+    need_rhscl_repo() { :; }
   fi
 
   if broker
@@ -565,6 +574,9 @@ configure_repos()
       # channel.
       need_jbossews_repo() { :; }
     fi
+
+    # The rhscl channel is needed for several cartridge platforms.
+    need_rhscl_repo() { :; }
   fi
 
   # The configure_yum_repos, configure_rhn_channels, and
@@ -593,7 +605,7 @@ configure_yum_repos()
 {
   configure_rhel_repo
 
-  for repo in optional infra node jbosseap_cartridge jbosseap jbossews client_tools;
+  for repo in optional infra node jbosseap_cartridge jbosseap jbossews client_tools rhscl;
   do eval "need_${repo}_repo && configure_${repo}_repo"
   done
 }
@@ -747,6 +759,22 @@ YUM
   fi
 }
 
+configure_rhscl_repo()
+{
+  if [ "x${rhscl_repo_base}" != "x" ]; then
+    cat <<YUM > /etc/yum.repos.d/rhscl.repo
+[rhscl]
+name=rhscl
+baseurl=${rhscl_repo_base}/rhscl/1/os/
+enabled=1
+priority=1
+gpgcheck=0
+
+YUM
+
+  fi
+}
+
 rhn_setopt() # e.g. rhn_setopt myrepo foo=bar
 {
   # RHN method for setting yum priorities and excludes:
@@ -783,6 +811,7 @@ configure_rhn_channels()
   need_infra_repo && rhn_setopt rhel-x86_64-server-6-ose-1.2-infrastructure priority=1
   need_node_repo && rhn_setopt rhel-x86_64-server-6-ose-1.2-node priority=1
   need_jbosseap_repo && rhn_setopt rhel-x86_64-server-6-ose-1.2-jbosseap priority=1
+  need_rhscl_repo && rhn_setopt rhel-x86_64-server-6-rhscl-1 priority=1
 
   # RHEL packages are second priority
   rhn_setopt rhel-x86_64-server-6 priority=2 "exclude=tomcat6*"
@@ -843,6 +872,7 @@ configure_rhsm_channels()
    need_client_tools_repo && ycm_setopt rhel-server-ose-1.2-rhc-6-rpms priority=1
    need_node_repo && ycm_setopt rhel-server-ose-1.2-node-6-rpms priority=1
    need_jbosseap_cartridge_repo && ycm_setopt rhel-server-ose-1.2-jbosseap-6-rpms priority=1
+   need_rhscl_repo && ycm_setopt rhel-server-rhscl-6-rpms priority=1
 
    # and JBoss subscriptions for the node
    if need_jbosseap_repo; then
@@ -2484,6 +2514,7 @@ set_defaults()
   # subscriptions via RHN. Internally we use private systems.
   rhel_repo="$CONF_RHEL_REPO"
   jboss_repo_base="$CONF_JBOSS_REPO_BASE"
+  rhscl_repo_base="${CONF_RHSCL_REPO_BASE%/}"
   rhel_optional_repo="$CONF_RHEL_OPTIONAL_REPO"
   # Where to find the OpenShift repositories; just the base part before
   # splitting out into Infrastructure/Node/etc.
@@ -2494,6 +2525,7 @@ set_defaults()
   if [ "x$cdn_repo_base" != "x" ]; then
     rhel_repo="${rhel_repo:-$cdn_repo_base/os}"
     jboss_repo_base="${jboss_repo_base:-$cdn_repo_base}"
+    rhscl_repo_base="${rhscl_repo_base:-$cdn_repo_base}"
     rhel_optional_repo="${rhel_optional_repo:-$cdn_repo_base/optional/os}"
     ose_repo_base="${ose_repo_base:-$cdn_repo_base}"
     if [ "${cdn_repo_base%/}" == "${ose_repo_base%/}" ]; then # same repo layout
@@ -2502,6 +2534,7 @@ set_defaults()
   elif [ "${rhel_repo%/}" == "${ose_repo_base%/}/os" ]; then # OSE same repo base as RHEL?
     CONF_CDN_LAYOUT=1  # use the CDN layout for OpenShift yum repos
   fi
+  rhscl_repo_base="${rhscl_repo_base:-${rhel_repo%/os}}"
   # no need to waste time checking both subscription plugins if using one
   disable_plugin=""
   [[ "$CONF_INSTALL_METHOD" == "rhsm" ]] && disable_plugin='--disableplugin=rhnplugin'
