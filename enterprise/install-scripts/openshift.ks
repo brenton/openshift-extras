@@ -955,7 +955,7 @@ firewall --service=ssh
 authconfig --enableshadow --passalgo=sha512
 selinux --enforcing
 
-bootloader --location=mbr --driveorder=vda --append=" rhgb crashkernel=auto quiet console=ttyS0"
+bootloader --location=mbr --driveorder=vda --append="console=tty0 console=ttyS0,115200n8"
 
 zerombr
 clearpart --all --initlabel

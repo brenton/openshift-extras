@@ -62,6 +62,12 @@ PAMAUTH
 insecure=true
 INSECURE
 
+  # Workaround required for using the vhost frontend httpd proxy
+  pushd /etc/httpd/conf.d/
+  ln -s 000002_openshift_origin_broker_proxy.conf 000000_openshift_origin_broker_proxy.conf
+  service httpd graceful
+  popd
+
 }
 
 setup_vm_user()
