@@ -14,7 +14,9 @@ PERSIST_SETTINGS=[
     'ansible_config',
     'ansible_plugins_directory',
     'ansible_inventory_directory',
+    'ansible_playbook_directory',
     'ansible_log_path',
+    'deployment_type',
     'validated_facts',
     ]
 

@@ -16,7 +16,7 @@ def generate_inventory(masters, nodes):
     base_inventory.write('ansible_ssh_user={}\n'.format(CFG.settings['ansible_ssh_user']))
     if not CFG.settings['ansible_ssh_user'] == 'root':
         base_inventory.write('ansible_sudo=true\n')
-    base_inventory.write('deployment_type={}\n'.format(CFG.deployment_type))
+    base_inventory.write('deployment_type={}\n'.format(CFG.settings['deployment_type']))
     if 'OO_INSTALL_DEVEL_REGISTRY' in os.environ:
         base_inventory.write('oreg_url=docker-buildvm-rhose.usersys.redhat.com:5000/openshift3/ose-${component}:${version}\n')
     if 'OO_INSTALL_PUDDLE_REPO_ENABLE' in os.environ:
@@ -65,7 +65,7 @@ def default_facts(masters, nodes):
     if 'validated_facts' in CFG.settings:
         del CFG.settings['validated_facts']
     inventory_file = generate_inventory(masters, nodes)
-    os_facts_path = '{}/playbooks/byo/openshift_facts.yml'.format(CFG.ansible_playbook_directory)
+    os_facts_path = '{}/playbooks/byo/openshift_facts.yml'.format(CFG.settings['ansible_playbook_directory'])
 
     facts_env = os.environ.copy()
     facts_env["OO_INSTALL_CALLBACK_FACTS_YAML"] = CFG.settings['ansible_callback_facts_yaml']
@@ -88,7 +88,7 @@ def default_facts(masters, nodes):
 def run_main_playbook(masters, nodes):
     global CFG
     inventory_file = generate_inventory(masters, nodes)
-    main_playbook_path = '{}/playbooks/byo/config.yml'.format(CFG.ansible_playbook_directory)
+    main_playbook_path = '{}/playbooks/byo/config.yml'.format(CFG.settings['ansible_playbook_directory'])
     facts_env = os.environ.copy()
     if 'ansible_log_path' in CFG.settings:
         facts_env["ANSIBLE_LOG_PATH"] = CFG.settings['ansible_log_path']
