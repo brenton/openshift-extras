@@ -23,6 +23,8 @@ def generate_inventory(masters, nodes):
         base_inventory.write('oreg_url=rcm-img-docker01.build.eng.bos.redhat.com:5001/openshift3/ose-${component}:${version}\n')
     if 'OO_INSTALL_PUDDLE_REPO_ENABLE' in os.environ:
         base_inventory.write("openshift_additional_repos=[{'id': 'ose-devel', 'name': 'ose-devel', 'baseurl': 'http://buildvm-devops.usersys.redhat.com/puddle/build/OpenShiftEnterprise/3.0/latest/RH7-RHOSE-3.0/$basearch/os', 'enabled': 1, 'gpgcheck': 0}]\n")
+    if 'OO_INSTALL_31_PUDDLE_REPO_ENABLE' in os.environ:
+        base_inventory.write("openshift_additional_repos=[{'id': 'ose-devel', 'name': 'ose-devel', 'baseurl': 'http://buildvm-devops.usersys.redhat.com/puddle/build/AtomicOpenShift/3.1/latest/RH7-RHAOS-3.1/$basearch/os', 'enabled': 1, 'gpgcheck': 0}]\n")
     if 'OO_INSTALL_STAGE_REGISTRY' in os.environ:
         base_inventory.write('oreg_url=registry.access.stage.redhat.com/openshift3/ose-${component}:${version}\n')
     base_inventory.write('\n[masters]\n')
